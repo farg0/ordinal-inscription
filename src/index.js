@@ -5,19 +5,21 @@ const {
   createRevealTx,
 } = require('./ordinals-bitcoinjs');
 const bitcoinjs = require('bitcoinjs-lib');
+require('dotenv').config();
 
-const secret = '';
-const toAddress = 'tb1q5eja48z06hcgdqtmahxhegdp8nys84997szfjf';
+const secret = process.env.SECRET;
+const toAddress = 'tb1qt0hhlyrng2cx6yyqt7umnknmlaqtq0xa9nqqh4';
 const inputTxId =
-  'af348cf9eac6b2a25000873549bb7ec1bdf5ec674c4212accd03778259c26355';
-const inputIndex = 4;
+  'fb7092aaf6365986240587719e7d150a17faf1d44406acf8e03bfcaeb347a388';
+const inputIndex = 0;
+const inscriptionText = 'Hello!!';
 
 async function main() {
   const privateKey = Buffer.from(secret, 'hex');
   const keypair = ECPair.fromPrivateKey(privateKey);
   const publicKey = keypair.publicKey;
 
-  const inscription = createTextInscription({ text: 'Hello!!' });
+  const inscription = createTextInscription({ text: inscriptionText });
   const commitTxData = createCommitTxData({
     publicKey,
     inscription,

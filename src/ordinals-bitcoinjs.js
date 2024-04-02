@@ -63,13 +63,17 @@ function createCommitTxData({ publicKey, inscription }) {
 
   const scriptTree = {
     output: outputScript,
+  };
+
+  const redeemTree = {
+    output: outputScript,
     redeemVersion: 192,
   };
 
   const scriptTaproot = bitcoinjsLib.payments.p2tr({
     internalPubkey: xOnlyPublicKey,
     scriptTree,
-    redeem: scriptTree,
+    redeem: redeemTree,
     network,
   });
 
@@ -77,6 +81,8 @@ function createCommitTxData({ publicKey, inscription }) {
 
   const revealAddress = scriptTaproot.address;
   const tpubkey = scriptTaproot.pubkey.toString('hex');
+  // pay to this address
+  console.log('payment tapscript address', revealAddress);
   const cblock =
     scriptTaproot.witness?.[scriptTaproot.witness.length - 1].toString('hex');
 
@@ -118,16 +124,19 @@ async function createRevealTx({
     hash: commitTxResult.txId,
     index: commitTxResult.sendUtxoIndex,
     witnessUtxo: {
-      value: commitTxResult.sendAmount,
+      // value: commitTxResult.sendAmount,
+      value: 1000,
       script: scriptTaproot.output,
     },
     tapLeafScript: [tapLeafScript],
   });
 
-  psbt.addOutput({
-    value: amount, // generally 1000 for nfts, 549 for brc20
-    address: toAddress,
-  });
+  psbt.addOutputs([
+    {
+      value: 600, // generally 1000 for nfts, 549 for brc20
+      address: toAddress,
+    },
+  ]);
 
   psbt.signInput(0, keypair);
 
