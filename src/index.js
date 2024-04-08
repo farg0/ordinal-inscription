@@ -10,7 +10,7 @@ require('dotenv').config();
 const secret = process.env.SECRET;
 const toAddress = 'tb1qt0hhlyrng2cx6yyqt7umnknmlaqtq0xa9nqqh4';
 const inputTxId =
-  'fb7092aaf6365986240587719e7d150a17faf1d44406acf8e03bfcaeb347a388';
+  '46577b6768b543839d13f18046a62eb48a7db9dd0dff01e6fd41ca9d1f3cad01';
 const inputIndex = 0;
 const inscriptionText = 'Hello!!';
 
@@ -24,6 +24,7 @@ async function main() {
     publicKey,
     inscription,
   });
+  console.log('commit Txdata', commitTxData)
 
   const padding = 549;
   const txSize = 600 + Math.floor(inscription.content.length / 4);

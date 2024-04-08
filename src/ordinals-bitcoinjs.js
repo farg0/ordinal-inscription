@@ -53,11 +53,58 @@ function createInscriptionScript({ xOnlyPublicKey, inscription }) {
   ];
 }
 
+function createInscriptionWithPointerScript({ xOnlyPublicKey, inscription }) {
+  assert(xOnlyPublicKey instanceof Buffer, `xOnlyPublicKey must be a Buffer`);
+  assert(inscription, `inscription is required`);
+  assert(
+    inscription.content instanceof Buffer,
+    `inscription.content must be a Buffer`
+  );
+  assert(
+    inscription.contentType instanceof Buffer,
+    `inscription.content must be a Buffer`
+  );
+  const protocolId = Buffer.from(encoder.encode('ord'));
+  return [
+    xOnlyPublicKey,
+    bitcoinjsLib.opcodes.OP_CHECKSIG,
+// inscription 1
+    bitcoinjsLib.opcodes.OP_0,
+    bitcoinjsLib.opcodes.OP_IF,
+    protocolId,
+    1,
+    1, // ISSUE, Buffer.from([1]) is replaced to 05 rather asMinimalOP than 0101 here https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/src/script.js#L53
+    // this may not be an issue but it generates a different script address. Unsure if ordinals indexer detect 05 as the content type separator
+    inscription.contentType,
+    Buffer.from([2]),
+    Buffer.from([0x22,0x02]),
+    bitcoinjsLib.opcodes.OP_0,
+    inscription.content,
+    bitcoinjsLib.opcodes.OP_ENDIF,
+// inscription 2
+    bitcoinjsLib.opcodes.OP_0,
+    bitcoinjsLib.opcodes.OP_IF,
+    protocolId,
+    1,
+    1, // ISSUE, Buffer.from([1]) is replaced to 05 rather asMinimalOP than 0101 here https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/src/script.js#L53
+    // this may not be an issue but it generates a different script address. Unsure if ordinals indexer detect 05 as the content type separator
+    inscription.contentType,
+    Buffer.from([2]),
+    Buffer.from([0x44, 0x04]),
+    bitcoinjsLib.opcodes.OP_0,
+    inscription.content,
+    bitcoinjsLib.opcodes.OP_ENDIF,
+
+  ];
+}
+
 function createCommitTxData({ publicKey, inscription }) {
   assert(publicKey, 'encodePublic is required');
   assert(inscription, 'inscription is required');
   const xOnlyPublicKey = toXOnly(publicKey);
-  const script = createInscriptionScript({ xOnlyPublicKey, inscription });
+  // const script = createInscriptionScript({ xOnlyPublicKey, inscription });
+  const script = createInscriptionWithPointerScript({ xOnlyPublicKey, inscription });
+  
 
   const outputScript = bitcoinjsLib.script.compile(script);
 
@@ -125,13 +172,17 @@ async function createRevealTx({
     index: commitTxResult.sendUtxoIndex,
     witnessUtxo: {
       // value: commitTxResult.sendAmount,
-      value: 1000,
+      value: 1800,
       script: scriptTaproot.output,
     },
     tapLeafScript: [tapLeafScript],
   });
 
   psbt.addOutputs([
+    {
+      value: 600, // generally 1000 for nfts, 549 for brc20
+      address: toAddress,
+    },
     {
       value: 600, // generally 1000 for nfts, 549 for brc20
       address: toAddress,
